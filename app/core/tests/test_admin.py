@@ -6,22 +6,22 @@ from django.urls import reverse
 class AdminSiteTests(TestCase):
     def setUp(self):
         # Setup tasks are required tasks which are need to be done before other functions
-        self.client= Client()
-        self.admin_user =get_user_model().objects.create_superuser(
-        email='admin@defynance.com',
-        password='password123'
+        self.client = Client()
+        self.admin_user = get_user_model().objects.create_superuser(
+        email = 'admin@defynance.com',
+        password = 'password123'
         )
 
         self.client.force_login(self.admin_user)
-        self.user=get_user_model().objects.create_user(
-        email='test@defynance.com',
-        password='password',
-        name='Test user full name'
+        self.user = get_user_model().objects.create_user(
+        email = 'test@defynance.com',
+        password = 'password',
+        name = 'Test user full name'
         )
 
     def test_user_listed(self):
         """Test that users are listed on user page"""
-        url =reverse('admin:core_user_changelist')
+        url = reverse('admin:core_user_changelist')
         res = self.client.get(url)
 
         self.assertContains(res, self.user.name)
@@ -29,14 +29,14 @@ class AdminSiteTests(TestCase):
 
     def test_user_change_page(self):
         """Test  that the user edit page works"""
-        url= reverse('admin:core_user_change', args=[self.user.id])
-        res=self.client.get(url)
+        url = reverse('admin:core_user_change', args = [self.user.id])
+        res = self.client.get(url)
 
-        self.assertEqual(res.status_code,200)
+        self.assertEqual(res.status_code, 200)
 
     def test_create_user_page(self):
         """Test that the create user page works"""
-        url =reverse('admin:core_user_add')
-        res=self.client.get(url)
+        url = reverse('admin:core_user_add')
+        res = self.client.get(url)
 
-        self.assertEqual(res.status_code,200)
+        self.assertEqual(res.status_code, 200)
