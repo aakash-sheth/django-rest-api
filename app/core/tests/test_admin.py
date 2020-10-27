@@ -1,23 +1,28 @@
 from django.test import TestCase, Client
 from django.contrib.auth import get_user_model
 from django.urls import reverse
-##reverse is a helper function which helps to generate urls for django admin function
+# reverse is a helper function which helps to generate urls
+# for django admin function
+
 
 class AdminSiteTests(TestCase):
+
     def setUp(self):
-        # Setup tasks are required tasks which are need to be done before other functions
+        # Setup tasks are required tasks which are need
+        # to be done before other functions
+
         self.client = Client()
         self.admin_user = get_user_model().objects.create_superuser(
-        email = 'admin@defynance.com',
-        password = 'password123'
-        )
+            email='admin@defynance.com',
+            password='password123'
+            )
 
         self.client.force_login(self.admin_user)
         self.user = get_user_model().objects.create_user(
-        email = 'test@defynance.com',
-        password = 'password',
-        name = 'Test user full name'
-        )
+            email='test@defynance.com',
+            password='password',
+            name='Test user full name'
+            )
 
     def test_user_listed(self):
         """Test that users are listed on user page"""
@@ -29,7 +34,7 @@ class AdminSiteTests(TestCase):
 
     def test_user_change_page(self):
         """Test  that the user edit page works"""
-        url = reverse('admin:core_user_change', args = [self.user.id])
+        url = reverse('admin:core_user_change', args=[self.user.id])
         res = self.client.get(url)
 
         self.assertEqual(res.status_code, 200)
