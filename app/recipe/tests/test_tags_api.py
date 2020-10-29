@@ -24,6 +24,7 @@ class PublicTagApiTests(TestCase):
 
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
+
 class PrivateUserApiTests(TestCase):
     """ Test the authorized user tags API"""
 
@@ -54,15 +55,13 @@ class PrivateUserApiTests(TestCase):
             'other@defynance.com',
             'testpass'
         )
-
-        Tag.objects.create(user=user2,name='Fruity')
-        tag= Tag.objects.create(user=self.user, name='Comfort food')
+        Tag.objects.create(user=user2, name='Fruity')
+        tag = Tag.objects.create(user=self.user, name='Comfort food')
         res = self.client.get(TAGS_URL)
 
         self.assertEqual(res.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(res.data),1)
-        self.assertEqual(res.data[0]['name'],tag.name)
-
+        self.assertEqual(len(res.data), 1)
+        self.assertEqual(res.data[0]['name'], tag.name)
 
     def test_create_tag_successful(self):
         """Test creating a new tag"""
@@ -70,14 +69,14 @@ class PrivateUserApiTests(TestCase):
         self.client.post(TAGS_URL, payload)
 
         exists = Tag.objects.filter(
-        user=self.user,
-        name=payload['name']
-        ).exists()
+            user=self.user,
+            name=payload['name']
+            ).exists()
         self.assertTrue(exists)
 
     def test_create_tag_invalid(self):
         """Test creating a new tag with invalid payload"""
-        payload = {'name':''}
+        payload = {'name': ''}
         res = self.client.post(TAGS_URL, payload)
 
         res = self.client.post(TAGS_URL, payload)
