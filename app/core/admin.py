@@ -33,3 +33,10 @@ class UserAdmin(BaseUserAdmin):
 admin.site.register(models.User, UserAdmin)
 admin.site.register(models.Tag)
 admin.site.register(models.Ingredient)
+admin.site.register(models.GrowthRateByAgeEducation)
+admin.site.register(models.UnemploymentByIndustry)
+admin.site.register(models.UnemploymentByOccupation)
+admin.site.register(models.UnemploymentByAgeGroup)
+admin.site.register(models.Pricing)
+admin.site.register(models.EmploymentDurationByAgeGroup)
+# admin.site.register(models.Pricing
