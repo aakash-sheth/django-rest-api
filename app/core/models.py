@@ -165,6 +165,16 @@ class EmploymentDurationByAgeGroup(models.Model):
     def __str__(self):
         return self.age_group
 
+
+class HikesByEducation(models.Model):
+    """Table of average % hike by Education based on what farrukh(asshole) thinks"""
+    updated_date = models.DateField(auto_now=True)
+    degree = models.CharField(max_length=255)
+    hike = models.DecimalField(max_digits=6, decimal_places=3)
+
+    def __str__(self):
+        return str(self.degree)
+
 #
 # class Quote(models.Model):
 #     """Quotes Calculated"""

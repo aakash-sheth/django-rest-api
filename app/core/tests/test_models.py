@@ -151,3 +151,12 @@ class ModelTests(TestCase):
         )
 
         self.assertEqual(str(employment_duratiom_agegroup),employment_duratiom_agegroup.age_group)
+
+    def test_hike_by_education(self):
+        """Test hikes by education"""
+        hike_by_education = models.HikesByEducation.objects.create(
+            updated_date="2020-02-02",
+            degree="masters",
+            hike=0.20,
+        )
+        self.assertEqual(str(hike_by_education),hike_by_education.degree)
