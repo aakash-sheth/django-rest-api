@@ -175,8 +175,105 @@ class PrivateQuoteApiTests(TestCase):
         )
 
         prais= Prais()
-        unemp_start,unemp_months,term = prais.GetUnemploymentLists(age=27,
+        unemp_start,unemp_months= prais.GetUnemploymentLists(age=27,
                         term=5,method="Median",industry="NA",profession="NA")
         self.assertEqual([37], unemp_start)
         self.assertEqual([3],unemp_months)
-        self.assertEqual(63,term)
+
+
+    def test_GetQuote(self):
+        """Test GetQuote function returns a right output"""
+
+        isa_para = PraisParameterCap.objects.create(
+                    isa_processing_fee=0.01 ,
+                    isa_servicing_fee=0.05,
+                    isa_sales_charge=0.02,
+                    minimum_self_equity_perc=0.05,
+                    max_minimum_self_equity=5000,
+                    annual_lower_income=25000,
+                    isa_processing_fee_cap=1500,
+                    buyout_servicing_fee=0.05,
+                    isp_age_factor=2.5)
+
+        prais= Prais()
+        Quote = prais.GetQuote(funding_amount=31000,
+                                current_income=44000,
+                                growth_rate=0.03 ,
+                                unemployment_start_list=[37],
+                                term=5,
+                                age=26,
+                                hike=0.03,
+                                unemployment_months_list=[3],
+                                targeted_return=0.03)
+        self.assertEqual(5,Quote['term'])
+
+    def test_GetQuote(self):
+        """Test GetQuote function returns a right output"""
+
+        isa_para = PraisParameterCap.objects.create(
+                    isa_processing_fee=0.01 ,
+                    isa_servicing_fee=0.05,
+                    isa_sales_charge=0.02,
+                    minimum_self_equity_perc=0.05,
+                    max_minimum_self_equity=5000,
+                    annual_lower_income=25000,
+                    isa_processing_fee_cap=1500,
+                    buyout_servicing_fee=0.05,
+                    isp_age_factor=2.5)
+
+        growth_rate = GrowthRateByAgeEducation.objects.create(
+                                                    age=100,
+                                                    dropout=2.0,
+                                                    diploma=2.0,
+                                                    some_college=2.0,
+                                                    associates=0.02,
+                                                    license=2.0,
+                                                    bachelors=2.0,
+                                                    masters=2.0,
+                                                    mba=2.0,
+                                                    attorney=2.0,
+                                                    doctorate=2.0,
+                                                    professional=2.0,
+                                                )
+        unemployment_duration_by_agegroup = UnemploymentByAgeGroup.objects.create(
+                                                    age_group="25-34",
+                                                    age_min=25,
+                                                    age_max=34,
+                                                    mean_duration=23.0,
+                                                    median_duration=10.0
+                                                )
+        employment_duratiom_agegroup = EmploymentDurationByAgeGroup.objects.create(
+                                                            age_group="25-34",
+                                                            age_min=25,
+                                                            age_max=34,
+                                                            duration=2.8
+                                                        )
+
+        hike_by_education = models.HikesByEducation.objects.create(
+            updated_date="2020-02-02",
+            degree="masters",
+            hike=0.20,
+        )
+
+        pricing = models.Pricing.objects.create(
+            term=10,
+            interest_rate=0.1,
+            min_cagr=0.1,
+            targeted_cagr=0.1,
+            max_cagr=0.1,
+            payment_cap_factor=0.1,
+            prepayment_fv=0.1,
+            prepayment_growth=0.1
+        )
+
+        prais= Prais()
+
+        Quotes = prais.Quotes(funding_amount=31000,
+                              current_income=44000,
+                              age=26,
+                              degree='masters',
+                              industry="NA",
+                              profession="NA",
+                              method="Median")
+
+        self.assertEqual(5,Quote['term'])
