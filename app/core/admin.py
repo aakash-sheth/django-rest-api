@@ -40,4 +40,6 @@ admin.site.register(models.UnemploymentByAgeGroup)
 admin.site.register(models.Pricing)
 admin.site.register(models.EmploymentDurationByAgeGroup)
 admin.site.register(models.HikesByEducation)
+admin.site.register(models.PraisParameterCap)
+
 # admin.site.register(models.Pricing

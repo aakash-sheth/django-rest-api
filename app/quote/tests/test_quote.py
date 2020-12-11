@@ -7,7 +7,8 @@ from rest_framework.test import APIClient
 from quote.quote import Prais
 from core.models import GrowthRateByAgeEducation, UnemploymentByAgeGroup,\
                         UnemploymentByIndustry,UnemploymentByOccupation,\
-                        Pricing,EmploymentDurationByAgeGroup, User
+                        Pricing,EmploymentDurationByAgeGroup, User,\
+                        PraisParameterCap
 QUOTE_URL = reverse('quote:growthrate')
 #
 # class PublicQuoteApiTests(TestCase):
@@ -32,6 +33,25 @@ class PrivateQuoteApiTests(TestCase):
             'testpass'
         )
         self.client.force_authenticate(self.user)
+
+    def test_praisparas(self):
+        """Test that GetPraisFixedPara functions returns latest isa parameters"""
+
+        isa_para = PraisParameterCap.objects.create(
+                    isa_processing_fee=0.2 ,
+                    isa_servicing_fee=0.02,
+                    isa_sales_charge=1.2,
+                    minimum_self_equity_perc=0.05,
+                    max_minimum_self_equity=12,
+                    annual_lower_income=12,
+                    isa_processing_fee_cap=111,
+                    buyout_servicing_fee=0.07,
+                    isp_age_factor=0.25)
+
+        prais = Prais()
+        latest_para = prais.GetPraisFixedPara()
+
+        self.assertEqual(1.2, float(latest_para.isa_sales_charge))
 
     def test_getgrowthrate(self):
         """Test that GetGrowthRate functions returns the right growth rate"""

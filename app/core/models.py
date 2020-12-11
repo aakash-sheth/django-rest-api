@@ -63,6 +63,7 @@ class Ingredient(models.Model):
 
 
 class Recipe(models.Model):
+
         """Recipe object"""
         user = models.ForeignKey(
             settings.AUTH_USER_MODEL,
@@ -80,7 +81,8 @@ class Recipe(models.Model):
 
 
 class GrowthRateByAgeEducation(models.Model):
-    """Growth Rate Table by Age and Education"""
+
+    """Table for Growth Rate by Age and Education"""
     updated_date = models.DateField(auto_now=True)
     age = models.IntegerField(unique=True)
     dropout = models.DecimalField(max_digits=6, decimal_places=3)
@@ -161,20 +163,34 @@ class EmploymentDurationByAgeGroup(models.Model):
     age_max = models.IntegerField()
     duration = models.DecimalField(max_digits=4, decimal_places=1)
 
-
     def __str__(self):
         return self.age_group
 
 
 class HikesByEducation(models.Model):
-    """Table of average % hike by Education based on what farrukh(asshole) thinks"""
-    updated_date = models.DateField(auto_now=True)
+    """Table of average % hike by Education based on what farrukh thinks"""
     degree = models.CharField(max_length=255)
+    updated_date = models.DateField(auto_now=True)
     hike = models.DecimalField(max_digits=6, decimal_places=3)
 
     def __str__(self):
         return str(self.degree)
 
+class PraisParameterCap(models.Model):
+    """Table of Prais limit paramters for upper and lower protection"""
+    updated_date = models.DateField(auto_now=True)
+    isa_processing_fee = models.DecimalField(max_digits=6, decimal_places=3)
+    isa_servicing_fee = models.DecimalField(max_digits=6, decimal_places=3)
+    isa_sales_charge = models.DecimalField(max_digits=6, decimal_places=3)
+    minimum_self_equity_perc = models.DecimalField(max_digits=6, decimal_places=3)
+    max_minimum_self_equity = models.DecimalField(max_digits=7, decimal_places=2)
+    annual_lower_income = models.DecimalField(max_digits=8, decimal_places=2)
+    isa_processing_fee_cap = models.DecimalField(max_digits=8, decimal_places=2)
+    buyout_servicing_fee = models.DecimalField(max_digits=6, decimal_places=2)
+    isp_age_factor = models.DecimalField(max_digits=4, decimal_places=2)
+
+    def __str__(self):
+        return str(self.updated_date)
 #
 # class Quote(models.Model):
 #     """Quotes Calculated"""

@@ -1,30 +1,24 @@
 # import numpy as np
-
-from core.models import GrowthRateByAgeEducation, UnemploymentByAgeGroup,\
+from core import models
+from core.models import  UnemploymentByAgeGroup,GrowthRateByAgeEducation,\
                         UnemploymentByIndustry,UnemploymentByOccupation,\
-                        Pricing,EmploymentDurationByAgeGroup,User,
-                        GetHikeByEducation
+                        Pricing,EmploymentDurationByAgeGroup,User,\
+                        PraisParameterCap,HikesByEducation
 from django.core.exceptions import FieldError
 import math
+
 class Prais:
     #class variables
-    number_of_records=0
-    growth_rate=0.04
-    lower_threshold=2000
-    upper_cap=2
-    servicing_fee_perc=0.05
-
-    job_loss_from=0
-    job_loss_months=0
-
-
-    intermediate_income_change_perc = 0
-    month_of_income_change=0
+    number_of_records = 0
 
     def __init__(self):
-        #following variables will be defined by user
-        Prais.number_of_records+=1
+        # #following variables will be defined by user
 
+        Prais.number_of_records+=1
+    def GetPraisFixedPara(self):
+        """This method returns ISA fixed paramters"""
+        isa_para = PraisParameterCap.objects.all().order_by('-updated_date')[0]
+        return isa_para
 
     def GetGrowthRate(self,age,degree,profession,industry):
         """
@@ -32,9 +26,8 @@ class Prais:
         industry.
         """
         try:
-            growth_rate = GrowthRateByAgeEducation.objects.values_list(degree,
-                                                        flat=True).get(age=age)
-
+            growth_rate = GrowthRateByAgeEducation.objects.values_list(
+                                                    degree,flat=True).get(age=age)
         except FieldError:
             return "NA"
 
@@ -153,7 +146,7 @@ class Prais:
     # except:
     #         return ['NA'],['NA'],'NA'
 
-        return unemployment_start_list,unemployment_months_list,term
+        return unemployment_start_list,unemployment_months_list
 
     def GetHikeByEducation(self,degree):
         """This method returns the list of targeted return pricing for
@@ -163,16 +156,14 @@ class Prais:
                                                 flat=True).get(degree=degree)
 
         except FieldError:
-            raise Exception(Please check spelling of degree entered)
+            raise Exception("Please check spelling of degree entered")
 
         except :
-            raise Exception(Please check spelling of degree entered)
+            raise Exception("Please check spelling of degree entered")
 
         return hike
 
-    def GetQuote(self,funding_amount,current_income,growth_rate,
-                                    unemployment_start_list,term_month,age,
-                                    unemployment_months_list,targeted_return):
+    def GetQuote(self,funding_amount,current_income,growth_rate,unemployment_start_list,term,age,unemployment_months_list,targeted_return):
         """
         This method figures out best ISA rate for given ISA term and growth_rate.
         funding_amount: Amount to be refinance.
@@ -186,63 +177,124 @@ class Prais:
         targeted_return: The CAGR rate for given term.
         """
         #Method variable initialization
-        income=current_income
+        income = current_income
+        term_month = term * 12
+        # Get all the fixed parameters for an ISA
+        para = self.PraisParameterCap()
+        processing_fee = float(para.isa_processing_fee)
+        servicing_fee = float(para.isa_servicing_fee)
+        sales_charge = float(para.isa_sales_charge)
+        minimum_self_equity_perc = float(para.minimum_self_equity_perc)
+        max_minimum_self_equity = float(para.max_minimum_self_equity)
+        income_lower_limit = float(para.annual_lower_income)
+        processing_fee_cap = float(para.isa_processing_fee_cap)
+        buyout_servicing_fee = float(para.buyout_servicing_fee)
+        isp_age_factor = float(para.isp_age_factor)
+        servicing_fee = float(isa_fixed_para.isa_servicing_fee)
 
-        incubation_month=0
-        self_equity_perc=0
+        # Calculate minimum self equity amount required
+        min_self_equity = funding_amount * minimum_self_equity_perc
+        if min_self_equity > max_minimum_self_equity:
+            min_self_equity = max_minimum_self_equity
 
-        if self_equity_amount != 0:
-            incubation_month=1
-            self_equity_perc=self_equity_amount/loan_balance
-
-        term_month=term_month+incubation_month+self.job_loss_months
+        isa_processing fee = funding_amount * processing_fee
+        if isa_processing_fee > processing_fee_cap:
+            isa_processing_fee = processing_fee_cap
+        # If uneemployment list is empty due to term size and candidate age,
+        # following setup will avoid list index error
+        unemp_no = 0
+        len_unemp_list = len(unemployment_start_list)
+        if len_unemp_list == 0:
+            unemployment_months_list.append(0)
+            unemployment_start_list.append(0)
 
         #Method Counters
-        count=1
-        self_equity=0
-        sum_self_equity=0
-        sum_income_share=0
-        sum_servicing_fee=0
+        count = 1
+        self_equity = 0
+        self_equity_perc = 0
+        sum_self_equity = 0
+        sum_income_share = 0
+        sum_servicing_fee = 0
+        sum_incubation_amount = 0
+        incubation_months = 0
         isa_result={}
-        for i in range(1,term_month+1,1):
+        # Add formula to get a baseline result and compute from there.
+        isp_start=0.01
+        for isp in range(isp_start,0.2,0.0001):
+            while i <= term_month:
 
-            if i == self.month_of_income_change:
-                if i < self.job_loss_from or i > self.job_loss_to:
-                    income = income * (1 + self.intermediate_income_change_perc)
+                # Unemployment month count and  seeting elligible income 0
+                if (i >= unemployment_start_list[unemp_no]) \
+                    and (i < unemployment_start_list[unemp_no] \
+                        + unemployment_months_list[unemp_no]):
+
+                        if i == unemployment_start_list[unemp_no]:
+                            income_temp = income
+
+                        income = 0
+                        term_month += 1
+
+                # Income raise/hike after new employment
+                if i == unemployment_start_list[unemp_no] \
+                    + unemployment_months_list[unemp_no]:
+                    income = income_temp * (1 + hike)
                     count=1
 
-            if count==13:
-                income=income * (1 + self.growth_rate)
-                count=1
+                # Annual income growth
+                if count==13:
+                    income=income * (1 + growth_rate)
+                    count=1
 
-            monthly_income=round(income/12,2)
+                monthly_income=round(income/12,2)
 
-            if i >= self.job_loss_from and i <= self.job_loss_to:
-                monthly_income=0
-                count=1
-            if monthly_income<=self.lower_threshold:
-                monthly_income=0
+                # Set monthly income zero if income drops below lower limit
+                if monthly_income <= income_lower_limit/12:
+                    monthly_income = 0
+                    term_month += 1
 
-            income_share = round(monthly_income * isa_rate,2)
-            servicing_fee = round(income_share * self.servicing_fee_perc,2)
-            net_income_share = round(income_share - servicing_fee,2)
-            if i==1:
-                isa_result['1st_payment']=income_share
+                # calculate monthly income shares
+                income_share = round(monthly_income * isp,2)
 
-            if i > incubation_month:
-                self_equity = round(net_income_share * self_equity_perc,2)
+                # Substract processing fee 1st from  income share agreement
+                if isa_processing_fee > income_share:
+                    isa_processing_fee -= income_share
+                    income_share = 0
+                    term_month +=1
+                else:
+                    income_share -= isa_processing
+                    isa_processing = 0
+                     
+                servicing_fee_share = round(income_share * servicing_fee,2)
+                net_income_share = round(income_share - servicing_fee_share,2)
 
-            #Sum of shares
-            sum_income_share = round(sum_income_share + income_share,2)
-            sum_self_equity = round(sum_self_equity + self_equity,2)
-            sum_servicing_fee = round(sum_servicing_fee+servicing_fee,2)
-            # print('i={}'.format(i) +' '+'income_share={}'.format(income_share)+' '+'servicing_fee={}'.format(servicing_fee)+' '+'net_income_share={}'.format(net_income_share)+' '+'self_equity={}'.format(self_equity))
-            count+=1
 
-        net_amount_shared=sum_income_share - sum_self_equity +self_equity_amount
-        apr=np.rate(term_month,net_amount_shared/term_month,-loan_balance,0)*12
+                if i==1:
+                    isa_result['1st_payment']=income_share
+
+
+                # Calculate incubation months and self equity share
+                if sum_incubation_amount < min_self_equity:
+                    sum_incubation_amount += net_income_share
+                    self_equity_perc = sum_incubation_amount / funding_amount
+                    term_month += 1
+                else:
+                    # Calculate self equity share once incuabtion is finished
+                    self_equity = round(net_income_share * self_equity_perc,2)
+
+                #Sum of shares
+                sum_income_share = round(sum_income_share + income_share,2)
+                sum_self_equity = round(sum_self_equity + self_equity,2)
+                sum_servicing_fee = round(sum_servicing_fee + servicing_fee_share,2)
+                count += 1
+                i += 1
+            sum_investor_share = sum_income_share - sum_self_equity +self_equity_amount
+            cagr = (sum_investor_share / (funding_amount * (1+sales_charge))^(12/term_month)-1
+            if cagr >= targeted_cagr:
+                break
+
         isa_result['last_payment']=income_share
-        isa_result['total_payment']=sum_income_share+self_equity_amount
+        isa_result['total_payment']=sum_income_share
+
         isa_result['cashback']=sum_self_equity
         isa_result['net_payment']=net_amount_shared
         isa_result['apr']=apr
@@ -256,6 +308,7 @@ class Prais:
         #Initiate quote dictionary
         quote_dict={}
         age_limit = 60
+
         growth_rate = self.GetGrowthRate(age,degree,profession,industry)
         hike = self.GetHikeByEducation(degree)
         terms_list = [5,7,10,12,15]
@@ -264,11 +317,12 @@ class Prais:
 
             targeted_cagr = GetTargetedReturn(term)
 
-            unemployment_start_list,unemployment_months_list,term_month = self.GetUnemploymentLists(age,
+            unemployment_start_list,unemployment_months_list = self.GetUnemploymentLists(age,
                                                 term,method="Median",industry="NA",profession="NA")
             quote_for_term = self.GetQuote(funding_amount,current_income,growth_rate,
-                                            unemployment_start_list,term_month,age,
-                                            unemployment_months_list,targeted_return)
+                                            term,age,targeted_return,hike,
+                                            unemployment_start_list,
+                                            unemployment_months_list)
 
             if (not 'error' in quote_for_term) and (age + term != age_limit):
                 qoute_dict[term] = quote_for_term
