@@ -8,7 +8,7 @@ from quote.quote import Prais
 from core.models import GrowthRateByAgeEducation, UnemploymentByAgeGroup,\
                         UnemploymentByIndustry,UnemploymentByOccupation,\
                         Pricing,EmploymentDurationByAgeGroup, User,\
-                        PraisParameterCap
+                        PraisParameterCap, HikesByEducation
 QUOTE_URL = reverse('quote:growthrate')
 #
 # class PublicQuoteApiTests(TestCase):
@@ -222,18 +222,18 @@ class PrivateQuoteApiTests(TestCase):
                     isp_age_factor=2.5)
 
         growth_rate = GrowthRateByAgeEducation.objects.create(
-                                                    age=100,
-                                                    dropout=2.0,
-                                                    diploma=2.0,
-                                                    some_college=2.0,
-                                                    associates=0.02,
-                                                    license=2.0,
-                                                    bachelors=2.0,
-                                                    masters=2.0,
-                                                    mba=2.0,
-                                                    attorney=2.0,
-                                                    doctorate=2.0,
-                                                    professional=2.0,
+                                                    age=26,
+                                                    dropout=0.03,
+                                                    diploma=0.03,
+                                                    some_college=0.03,
+                                                    associates=0.03,
+                                                    license=0.03,
+                                                    bachelors=0.03,
+                                                    masters=0.03,
+                                                    mba=0.03,
+                                                    attorney=0.03,
+                                                    doctorate=0.03,
+                                                    professional=0.03,
                                                 )
         unemployment_duration_by_agegroup = UnemploymentByAgeGroup.objects.create(
                                                     age_group="25-34",
@@ -249,17 +249,17 @@ class PrivateQuoteApiTests(TestCase):
                                                             duration=2.8
                                                         )
 
-        hike_by_education = models.HikesByEducation.objects.create(
+        hike_by_education = HikesByEducation.objects.create(
             updated_date="2020-02-02",
             degree="masters",
-            hike=0.20,
+            hike=0.03,
         )
 
-        pricing = models.Pricing.objects.create(
-            term=10,
+        pricing = Pricing.objects.create(
+            term=7,
             interest_rate=0.1,
             min_cagr=0.1,
-            targeted_cagr=0.1,
+            targeted_cagr=0.0325,
             max_cagr=0.1,
             payment_cap_factor=0.1,
             prepayment_fv=0.1,
@@ -268,12 +268,13 @@ class PrivateQuoteApiTests(TestCase):
 
         prais= Prais()
 
-        Quotes = prais.Quotes(funding_amount=31000,
+        Quote = prais.Quotes(funding_amount=31000,
                               current_income=44000,
                               age=26,
                               degree='masters',
                               industry="NA",
                               profession="NA",
-                              method="Median")
-
-        self.assertEqual(5,Quote['term'])
+                              method="Median",
+                              term_list = [7])
+        print(Quote)
+        self.assertEqual(7,Quote[7]['term'])

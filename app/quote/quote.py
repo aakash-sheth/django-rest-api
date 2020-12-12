@@ -40,14 +40,14 @@ class Prais:
         """This method returns the list of targeted return pricing for
         respective term"""
         try:
-            targeted_return = Pricing.objectsvalues_list(targeted_cagr,
+            targeted_return = Pricing.objects.values_list('targeted_cagr',
                                                         flat=True).get(term=term)
 
         except FieldError:
-            return ["NA"]
+            return "NA"
 
         except :
-            return ["NA"]
+            return "NA"
 
         return targeted_return
 
@@ -152,7 +152,7 @@ class Prais:
         """This method returns the list of targeted return pricing for
         respective term"""
         try:
-            hike = GetHikeByEducation.objectsvalues_list('hike',
+            hike = HikesByEducation.objects.values_list('hike',
                                                 flat=True).get(degree=degree)
 
         except FieldError:
@@ -163,7 +163,10 @@ class Prais:
 
         return hike
 
-    def GetQuote(self,funding_amount,current_income,term,age,growth_rate,hike,unemployment_start_list,unemployment_months_list,targeted_return):
+    def GetQuote(self,funding_amount,current_income,growth_rate,
+                                    term,age,targeted_return,hike,
+                                    unemployment_start_list,
+                                    unemployment_months_list):
         """
         This method figures out best ISA rate for given ISA term and growth_rate.
         funding_amount: Amount to be refinance.
@@ -191,7 +194,8 @@ class Prais:
         buyout_servicing_fee = float(para.buyout_servicing_fee)
         isp_age_factor = float(para.isp_age_factor)
         servicing_fee = float(para.isa_servicing_fee)
-
+        growth_rate = float(growth_rate)
+        hike = float(hike)
         # Calculate minimum self equity amount required
         min_self_equity = funding_amount * minimum_self_equity_perc
         if min_self_equity > max_minimum_self_equity:
@@ -269,6 +273,7 @@ class Prais:
                 if isa_processing_fee_amount > income_share:
                     isa_processing_fee_amount -= income_share
                     income_share = 0
+                    incubation_months += 1
                     term_month +=1
                 else:
                     income_share -= isa_processing_fee_amount
@@ -295,12 +300,15 @@ class Prais:
                 #Sum of shares
                 sum_income_share = round(sum_income_share + income_share,2)
                 sum_self_equity = round(sum_self_equity + self_equity,2)
-                sum_servicing_fee = round(sum_servicing_fee + servicing_fee_share,2)
+                sum_servicing_fee = round(sum_servicing_fee \
+                                        + servicing_fee_share,2)
                 count += 1
                 i += 1
 
-            sum_investor_share = sum_income_share - sum_self_equity - sum_servicing_fee
-            cagr = (sum_investor_share / (funding_amount * (1+sales_charge)))**(12/term_month)-1
+            sum_investor_share = sum_income_share - sum_self_equity \
+                                - sum_servicing_fee
+            cagr = (sum_investor_share / \
+                    (funding_amount * (1+sales_charge)))**(12/term_month)-1
 
             if cagr >= targeted_return:
                 break
@@ -319,32 +327,36 @@ class Prais:
             isa_result['error'] = 'Quote crosses ISA Age multiple'
         return isa_result
 
-    def Quotes(self,funding_amount,current_income,age,degree,industry="NA",profession="NA",method="Median"):
+    def Quotes(self,funding_amount,current_income,age,degree,industry="NA",
+                profession="NA",method="Median",term_list = [5,7,10,12,15]):
         """This method returns quotes for all possible terms.
             method determins if data used for unemployment is Mean or Median.
         """
         #Initiate quote dictionary
         quote_dict={}
         age_limit = 60
-
         growth_rate = self.GetGrowthRate(age,degree,profession,industry)
         hike = self.GetHikeByEducation(degree)
-        terms_list = [5,7,10,12,15]
 
         for term in term_list:
 
             if term + age < 60:
 
-                targeted_cagr = GetTargetedReturn(term)
+                targeted_return = self.GetTargetedReturn(term)
 
-                unemployment_start_list,unemployment_months_list = self.GetUnemploymentLists(age,
-                                                    term,method="Median",industry="NA",profession="NA")
-                quote_for_term = self.GetQuote(funding_amount,current_income,growth_rate,
+                unemployment_start_list,unemployment_months_list = \
+                                    self.GetUnemploymentLists(age,
+                                                            term,
+                                                            method="Median",
+                                                            industry="NA",
+                                                            profession="NA")
+                quote_for_term = self.GetQuote(funding_amount,current_income,
+                                                growth_rate,
                                                 term,age,targeted_return,hike,
                                                 unemployment_start_list,
                                                 unemployment_months_list)
 
                 if (not 'error' in quote_for_term) and (age + term != age_limit):
-                    qoute_dict[term] = quote_for_term
+                    quote_dict[term] = quote_for_term
 
         return quote_dict
