@@ -9,10 +9,11 @@ from core.models import GrowthRateByAgeEducation, UnemploymentByAgeGroup,\
                         UnemploymentByIndustry,UnemploymentByOccupation,\
                         Pricing,EmploymentDurationByAgeGroup, User,\
                         PraisParameterCap, HikesByEducation
-QUOTE_URL = reverse('quote:growthrate')
-#
+from quote import views
+QUOTE_URL = reverse('quote:quotes')
+
 # class PublicQuoteApiTests(TestCase):
-#     """Test the publically available ingredients API"""
+#     """Test the publically available quotes API"""
 #
 #     def setUp(self):
 #         self.client = APIClient()
@@ -22,9 +23,8 @@ QUOTE_URL = reverse('quote:growthrate')
 #         res = self.client.get(QUOTE_URL)
 #         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
-
 class PrivateQuoteApiTests(TestCase):
-    """Test ingredients can be retrieved by authorized user"""
+    """Test quotes can be retrieved by authorized user"""
 
     def setUp(self):
         self.client = APIClient()
@@ -102,7 +102,6 @@ class PrivateQuoteApiTests(TestCase):
 
         self.assertEqual("NA", growth_rate)
 
-
     def test_getgrowthrateforwrongage(self):
         """Test GetGrowthRate functions returns 'NA' if entered age is wrong"""
         growth_rate = GrowthRateByAgeEducation.objects.create(
@@ -179,7 +178,6 @@ class PrivateQuoteApiTests(TestCase):
                         term=5,method="Median",industry="NA",profession="NA")
         self.assertEqual([37], unemp_start)
         self.assertEqual([3],unemp_months)
-
 
     def test_GetQuote(self):
         """Test GetQuote function returns a right output"""
@@ -278,3 +276,71 @@ class PrivateQuoteApiTests(TestCase):
                               term_list = [7])
         print(Quote)
         self.assertEqual(7,Quote[7]['term'])
+
+    def test_quoteurl(self):
+        """Test that quote url api returns the right output"""
+        isa_para = PraisParameterCap.objects.create(
+                    isa_processing_fee=0.01 ,
+                    isa_servicing_fee=0.05,
+                    isa_sales_charge=0.02,
+                    minimum_self_equity_perc=0.05,
+                    max_minimum_self_equity=5000,
+                    annual_lower_income=25000,
+                    isa_processing_fee_cap=1500,
+                    buyout_servicing_fee=0.05,
+                    isp_age_factor=2.5)
+
+        growth_rate = GrowthRateByAgeEducation.objects.create(
+                                                    age=26,
+                                                    dropout=0.03,
+                                                    diploma=0.03,
+                                                    some_college=0.03,
+                                                    associates=0.03,
+                                                    license=0.03,
+                                                    bachelors=0.03,
+                                                    masters=0.03,
+                                                    mba=0.03,
+                                                    attorney=0.03,
+                                                    doctorate=0.03,
+                                                    professional=0.03,
+                                                )
+        unemployment_duration_by_agegroup = UnemploymentByAgeGroup.objects.create(
+                                                    age_group="25-34",
+                                                    age_min=25,
+                                                    age_max=34,
+                                                    mean_duration=23.0,
+                                                    median_duration=10.0
+                                                )
+        employment_duratiom_agegroup = EmploymentDurationByAgeGroup.objects.create(
+                                                            age_group="25-34",
+                                                            age_min=25,
+                                                            age_max=34,
+                                                            duration=2.8
+                                                        )
+
+        hike_by_education = HikesByEducation.objects.create(
+            updated_date="2020-02-02",
+            degree="masters",
+            hike=0.03,
+        )
+
+        pricing = Pricing.objects.create(
+            term=7,
+            interest_rate=0.1,
+            min_cagr=0.1,
+            targeted_cagr=0.0325,
+            max_cagr=0.1,
+            payment_cap_factor=0.1,
+            prepayment_fv=0.1,
+            prepayment_growth=0.1
+        )
+
+        payload = {
+        'funding_amount': 31000,
+        'current_income': 44000,
+        'age': 26,
+        'degree': 'masters',
+        'term_list':[7]
+        }
+
+        res = self.client.get(QUOTE_URL, payload)

@@ -6,7 +6,7 @@ from core.models import GrowthRateByAgeEducation, UnemploymentByAgeGroup,\
                         Pricing,EmploymentDurationByAgeGroup
 
 
-class GrowthRateByAgeEducationSerializer(serializers.ModelSerializer):
+class GrowthRateByAgeEducationSerializer(serializers.Serializer):
     """Serializer for tag objects"""
 
     class Meta:
@@ -14,6 +14,11 @@ class GrowthRateByAgeEducationSerializer(serializers.ModelSerializer):
         fields = ('age')
         read_only_fields = ('age', )
 
+# class QuoteSerializer(serializers.ModelSerializer):
+#     """Serializer for quote generator"""
+#
+#     class Meta:
+#         model =
 #
 # class GrowthRateByAgeEducationSerializer(serializers.ModelSerializer):
 #     """Serializer a Growth Rate By A"""

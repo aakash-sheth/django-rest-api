@@ -7,12 +7,12 @@ from quote import views
 # associated with different elements of the app e.g. /app/tags , /app/tags/1
 
 router = DefaultRouter()
-router.register('quote', views.QuoteViewSet)
+# router.register('quote', views.QuoteViewSet)
 # router.register('ingredients', views.IngredientViewSet)
 
 app_name = 'quote'
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('growth_rate/', views.GetGrowthRateView, name='growthrate')
+    path('quotes/', views.QuoteViewSet.as_view(), name='quotes')
 ]

@@ -163,8 +163,8 @@ class Prais:
 
         return hike
 
-    def GetQuote(self,funding_amount,current_income,growth_rate,
-                                    term,age,targeted_return,hike,
+    def GetQuote(self,funding_amount,current_income,growth_rate,term,age,
+                                    targeted_return,hike,
                                     unemployment_start_list,
                                     unemployment_months_list):
         """
@@ -348,7 +348,7 @@ class Prais:
                                     self.GetUnemploymentLists(age,
                                                             term,
                                                             method="Median",
-                                                            industry="NA",
+                                                                    industry="NA",
                                                             profession="NA")
                 quote_for_term = self.GetQuote(funding_amount,current_income,
                                                 growth_rate,
@@ -358,5 +358,7 @@ class Prais:
 
                 if (not 'error' in quote_for_term) and (age + term != age_limit):
                     quote_dict[term] = quote_for_term
-
+                if len(quote_dict) == 0:
+                    quote_dict['Error'] = 'No suitable quote found'
+                    return quote_dict
         return quote_dict
