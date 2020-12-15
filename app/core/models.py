@@ -188,6 +188,9 @@ class PraisParameterCap(models.Model):
     isa_processing_fee_cap = models.DecimalField(max_digits=8, decimal_places=2)
     buyout_servicing_fee = models.DecimalField(max_digits=6, decimal_places=2)
     isp_age_factor = models.DecimalField(max_digits=4, decimal_places=2)
+    isa_maximum_value = models.DecimalField(max_digits=4, decimal_places=2)
+    max_age_for_quote = models.IntegerField()
+    min_age_for_quote = models.IntegerField()
 
     def __str__(self):
         return str(self.updated_date)

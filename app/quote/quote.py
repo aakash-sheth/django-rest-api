@@ -217,8 +217,9 @@ class Prais:
 
         # Add formula to get a baseline result and compute from there.
         # i=1 => 1/10000
-        isp_start=100
-        for isp_int in range(isp_start,2000,1):
+        isp_start = 100
+        isp_max = int(float(para.isa_maximum_value)*10000)
+        for isp_int in range(isp_start,isp_max,1):
             isp = isp_int/10000
             income = current_income
             term_month = term * 12
@@ -313,14 +314,17 @@ class Prais:
             if cagr >= targeted_return:
                 break
 
-
-        isa_result['last_payment']=income_share
-        isa_result['total_payment']=sum_income_share
-        isa_result['cashback']=sum_self_equity
-        isa_result['term']=term
-        isa_result['incubation_months']=incubation_months
-        isa_result['income_share']=isp
-        isa_result['self_equity_perc_by_incubation']=round(self_equity_perc,4)
+        if cagr >= targeted_return:
+            isa_result['last_payment']=income_share
+            isa_result['total_payment']=sum_income_share
+            isa_result['cashback']=sum_self_equity
+            isa_result['term']=term
+            isa_result['incubation_months']=incubation_months
+            isa_result['income_share']=isp
+            isa_result['self_equity_perc_by_incubation']=round(self_equity_perc,4)
+            #if no quote with targeted cagr is found then add error
+        else:
+            isa_result['error'] = 'Quote crosses ISA Age multiple'
 
         # final check if isp * term not crosses multiplication factor (2.5)
         if isp_age_factor <= isp * term:
@@ -334,13 +338,15 @@ class Prais:
         """
         #Initiate quote dictionary
         quote_dict={}
-        age_limit = 60
+        para = self.GetPraisFixedPara()
+        age_max = int(para.max_age_for_quote) # maximum age at the end of term
+        age_min = int(para.min_age_for_quote)
         growth_rate = self.GetGrowthRate(age,degree,profession,industry)
         hike = self.GetHikeByEducation(degree)
 
         for term in term_list:
 
-            if term + age < 60:
+            if term + age < age_max and term + age > age_min  :
 
                 targeted_return = self.GetTargetedReturn(term)
 
@@ -356,7 +362,7 @@ class Prais:
                                                 unemployment_start_list,
                                                 unemployment_months_list)
 
-                if (not 'error' in quote_for_term) and (age + term != age_limit):
+                if (not 'error' in quote_for_term) and (age + term != age_max):
                     quote_dict[term] = quote_for_term
                 if len(quote_dict) == 0:
                     quote_dict['Error'] = 'No suitable quote found'
