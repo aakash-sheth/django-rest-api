@@ -44,33 +44,6 @@ class ModelTests(TestCase):
         self.assertTrue(user.is_superuser)
         self.assertTrue(user.is_staff)
 
-    def test_tag_str(self):
-        """Test the tag string representation"""
-        tag = models.Tag.objects.create(
-            user=sample_user(),
-            name='Test'
-        )
-        self.assertEqual(str(tag), tag.name)
-
-    def test_ingredient_str(self):
-        """Test the ingredient string representation"""
-        ingredient = models.Ingredient.objects.create(
-            user=sample_user(),
-            name='Cucumber'
-            )
-        self.assertEqual(str(ingredient), ingredient.name)
-
-    def test_recipe_str(self):
-        """Test the recipe string representation"""
-        recipe = models.Recipe.objects.create(
-            user=sample_user(),
-            title='steak and mushroom sauce',
-            time_minutes=5,
-            price=5.00
-            )
-
-        self.assertEqual(str(recipe), recipe.title)
-
     def test_growthratebyageeducation_str(self):
         """Test growth rate by age and education str"""
         growth_rate = models.GrowthRateByAgeEducation.objects.create(
